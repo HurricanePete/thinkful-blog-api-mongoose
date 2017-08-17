@@ -2,9 +2,6 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 
-mongoose.Promise = global.Promise;
-
-const {PORT, DATABASE_URL} = require('./config');
 const {Blogs} = require('./models');
 
 const bodyParser = require('body-parser');
@@ -13,9 +10,20 @@ const jsonParser = bodyParser.json();
 router.get('/', (req, res) => {
 	Blogs
 		.find()
-		.then(Blogs => res.json(
-			Blogs.map(blogs => blogs.blogsRepr())
+		.then(blogs => res.json(
+			blogs.map(blogs => blogs.blogsRepr())
 		))
+		.catch(err => {
+			console.error(err);
+			res.status(500).json({message: 'Internal server error'})
+		});
+});
+
+router.get('/:id', (req, res) => {
+	Blogs
+		.findById(req.params.id)
+		.exec()
+		.then(blogs => res.json(blogs.blogsRepr()))
 		.catch(err => {
 			console.error(err);
 			res.status(500).json({message: 'Internal server error'})
@@ -32,8 +40,23 @@ router.post('/', jsonParser, (req, res) => {
 			return res.status(400).send(message);
 		}
 	}
-	const item = BlogPosts.create(req.body.name, req.body.content, req.body.author, req.body.publishDate);
-	res.status(201).json(item);
+
+	Blogs
+		.create({
+			title: req.body.title,
+			content: req.body.content,
+			author: {
+				firstName: req.body.author.firstName, 
+				lastName: req.body.author.lastName
+			},
+			created: Date.now()
+		})
+		.then(
+			blogs => res.status(201).json(blogs.blogsRepr()))
+		.catch(err=> { 
+			console.error(err);
+			res.status(500).json({message: 'Internal server error'});
+		});
 });
 
 router.delete('/:id', (req, res) => {

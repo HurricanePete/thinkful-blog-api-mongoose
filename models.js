@@ -7,7 +7,8 @@ const blogSchema = mongoose.Schema({
   author: {
     firstName: {type: String, required: true},
     lastName: {type: String, required: true}
-  }
+  },
+  created: {type: Number, default: Date.now()}
 });
 
 // *virtuals* (http://mongoosejs.com/docs/guide.html#virtuals)
